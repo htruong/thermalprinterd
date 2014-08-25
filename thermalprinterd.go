@@ -9,8 +9,10 @@ import (
   "strings"
 )
 
-var dev = flag.String("device", "/dev/ttyO1", "output printer device")
+var dev = flag.String("device", "/dev/ttyO1", "Output printer device")
 var port = flag.Int("port", 8080, "Port to listen to")
+var cmdline = flag.String("exec", "/usr/local/bin/serialprinter", "Command to execute")
+
 
 func main() {
   http.HandleFunc("/dest", posthandler)
@@ -34,13 +36,13 @@ func formhandler (w http.ResponseWriter, r *http.Request) {
 
 func posthandler (w http.ResponseWriter, r *http.Request) {
   stringToPrint := r.FormValue("content")
-  cmd := exec.Command("serialprinter", "-s", *dev)
+  cmd := exec.Command(*cmdline, "-s", *dev)
   cmd.Stdin = strings.NewReader(stringToPrint)
   printerErr := cmd.Run()
 
   if printerErr != nil {
     if err := postTemplate.Execute(w, stringToPrint); err != nil {
-      http.Error(w, "Template error", http.StatusInternalServerError)
+      http.Error(w, "Template error: ", http.StatusInternalServerError)
     }
   }
 }
